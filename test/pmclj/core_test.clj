@@ -16,10 +16,12 @@
 
 (defn example1 []
       (pipe_matching {:ok some} (func1 123) (func2 123) (func3 123)))
-
 (defn example2 []
       (pipe_matching {:ok some} (func1 123) (func3 123) (func2 123)))
-
+(defn example3 []
+      (pipe_not_matching {:fail some} (func1 123) (func2 123) (func3 123)))
+(defn example4 []
+      (pipe_not_matching {:fail some} (func1 123) (func3 123) (func2 123)))
 
 
 (deftest a-test1
@@ -28,3 +30,9 @@
 (deftest a-test2
          (testing "example2"
                   (is (= {:fail "func2_returns"} (example2)))))
+(deftest a-test3
+         (testing "example3"
+                  (is (= {:fail "func2_returns"} (example3)))))
+(deftest a-test4
+         (testing "example4"
+                  (is (= {:fail "func2_returns"} (example4)))))
