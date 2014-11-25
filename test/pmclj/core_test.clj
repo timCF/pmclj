@@ -5,15 +5,15 @@
 
 
 (defn func1 [arg2]
-      (println "func1 called" arg2)
+  ;(println "func1 called" arg2)
       {:ok "func1_returns"})
 
 (defn func2 [arg1 arg2]
-      (println "func2 called" arg1 arg2)
+  ;   (println "func2 called" arg1 arg2)
       {:fail "func2_returns"})
 
 (defn func3 [arg1 arg2]
-      (println "func3 called" arg1 arg2)
+  ;   (println "func3 called" arg1 arg2)
       {:ok "func3_returns"})
 (defn proxy_func [arg1 arg2] arg2)
 
@@ -23,7 +23,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn example1_pred []
-      (pred_matching #(contains? % :ok) (func1 123) (func2 123) (func3 123)))
+      (pred_matching #(contains? % :ok)
+                     (func1 123)
+                     (func2 123)
+                     (func3 123)))
 (defn example2_pred []
       (pred_matching #(contains? % :ok) (func1 123) (func3 123) (func2 123)))
 (defn example3_pred []
@@ -32,8 +35,6 @@
       (pred_not_matching #(contains? % :fail) (func1 123) (func3 123) (func2 123)))
 (defn example5_pred [] (let [res# "qwe"] (pred_matching #(contains? % :ok) (func1 res#) (func3 res#) (proxy_func res#))))
 (defn example6_pred [] (let [res "qwe"] (pred_matching #(contains? % :ok) (func1 res) (func3 res) (proxy_func res))))
-
-
 
 
 (deftest a-test1_pred
@@ -130,3 +131,48 @@
 (deftest a-test6_km
          (testing "example6"
                   (is (= "qwe" (example6_km)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; rkey matching tests ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn example1_rkm []
+  (rkey_matching :ok
+                {:func1res (func1 123)}
+                ((fn [res] (assoc res :func2res (func2 (get res :func1res) 123))))
+                ((fn [res] (assoc res :func3res (func3 (get res :func2res) 123))))))
+(defn example2_rkm []
+  (rkey_matching :ok
+                 {:func1res (func1 123)}
+                 ((fn [res] (assoc res :func3res (func3 (get res :func1res) 123))))
+                 ((fn [res] (assoc res :func2res (func2 (get res :func3res) 123))))))
+(defn example3_rkm []
+  (rkey_not_matching :fail
+                     {:func1res (func1 123)}
+                     ((fn [res] (assoc res :func2res (func2 (get res :func1res) 123))))
+                     ((fn [res] (assoc res :func3res (func3 (get res :func2res) 123))))))
+(defn example4_rkm []
+  (rkey_not_matching :fail
+                 {:func1res (func1 123)}
+                 ((fn [res] (assoc res :func3res (func3 (get res :func1res) 123))))
+                 ((fn [res] (assoc res :func2res (func2 (get res :func3res) 123))))))
+
+
+
+(deftest a-test1_rkm
+  (testing "example1"
+    (is (= {:func2res {:fail "func2_returns"}
+            :func1res {:ok "func1_returns"}
+            :func3res {:ok "func3_returns"}} (example1_rkm)))))
+(deftest a-test2_rkm
+  (testing "example2"
+    (is (= {:func2res {:fail "func2_returns"}
+            :func1res {:ok "func1_returns"}
+            :func3res {:ok "func3_returns"}} (example2_rkm)))))
+(deftest a-test3_rkm
+  (testing "example3"
+    (is (= {:fail "func2_returns"} (example3_rkm)))))
+(deftest a-test4_rkm
+  (testing "example4"
+    (is (= {:fail "func2_returns"} (example4_rkm)))))
